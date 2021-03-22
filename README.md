@@ -154,7 +154,7 @@ In our same `Click Test` example from before, let's first change all our Click E
 
 The first Smart Click targets the `Features` link in the site banner
 
-![Features](https://github.com/Worakow1138/Robot_Enhancements/blob/main/images/top_bar_features.png?raw=true)
+![Features](https://github.com/Worakow1138/RobotOil/blob/main/images/top_bar_features.png?raw=true)
 
 We can see that the tag for this element is `span` and the innerText is simply `Features`
 
@@ -223,7 +223,7 @@ You may now leverage the already powerful SeleniumLibrary Keywords, with Smart K
 Often times when testing web applications, asynchronous "loading elements" are implemented by web developers to inform their users that some part of the page is loading.
 Common examples include the jQuery Ajax "spinner"
 
-![ajax](https://github.com/Worakow1138/Robot_Enhancements/blob/main/images/ajax.jpg?raw=true)
+![ajax](https://github.com/Worakow1138/RobotOil/blob/main/images/ajax.jpg?raw=true)
 
 While useful to web developers and site users, these "loading elements" can often obstruct the view of the elements that an automated test case is trying to interact with.
 Writing around these loading elements for each expected interaction can be an enormous chore that Smart Keywords handle for us.
