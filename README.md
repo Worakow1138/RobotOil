@@ -117,6 +117,7 @@ In the same `persistent_test.robot` Test Suite from earlier, copy the following 
 
     Click Test
         Open Persistent Browser    https://phptravels.com/demo    chrome
+        Maximize Browser Window
         Click Element    css:body > header > div > nav > div:nth-child(3) > span
         Click Element    css:body > header > div > nav > div:nth-child(3) > div > a:nth-child(1)
         Click Element    css:#Main > section.is-highlighted > div > div > div.col-md-6.wow.fadeIn.animated > div > div.col-md-4 > a
@@ -125,6 +126,8 @@ Run using `robot -t "Click Test" PATH_TO_TEST_SUITE\persistent_test.robot`.
 
 This test ends up failing because the last use of Click Element is targeting the green "Demo" button on the Main Features page.
 However, this button has not become completely accessible when the Main Features page finishes loading, causing the Click Element Keywords to fail the Test Case.
+
+![not_yet_loaded](https://github.com/Worakow1138/RobotOil/blob/main/images/not_yet_loaded.png?raw=true)
 
 A typical workaround to this issue might include having to write in a Wait For Page to Contain Element (the element in question) or worse, a call to the dreaded `Sleep` Keyword. Static waits like Sleep and the variability of internet connections and server responses do NOT mix well.
 
