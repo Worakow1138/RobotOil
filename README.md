@@ -10,10 +10,10 @@
   - [Features and Examples](#features-and-examples)
     - [Persistent Browser](#persistent-browser)
       - [Persistent Browser Example](#persistent-browser-example)
-  - [Smart Keywords](#smart-keywords)
-    - [Smart Click Example](#smart-click-example)
-    - [Text Parsing using JQuery or JavaScript](#text-parsing-using-jquery-or-javascript)
-    - [Smart Keywords from Python](#smart-keywords-from-python)
+    - [Smart Keywords](#smart-keywords)
+      - [Smart Click Example](#smart-click-example)
+      - [Text Parsing using JQuery or JavaScript](#text-parsing-using-jquery-or-javascript)
+      - [Smart Keywords from Python](#smart-keywords-from-python)
     - [Loading Elements](#loading-elements)
   - [Conclusion](#conclusion)
 
@@ -98,7 +98,7 @@ creating a new Persistent Browser.
 
 When it's actually time to close up the browser and any webdrivers that may be hanging around, simply call the `Cleanup Persistent Browser` Keyword.
 
-## Smart Keywords
+### Smart Keywords
 The [SeleniumLibrary](https://github.com/robotframework/SeleniumLibrary) package features a wide variety of powerful Keywords for interacting with web elements.
 Keywords like Click Element, Input Text, and so forth probably make up the bulk of most web automation projects using [Robot Framework](https://robotframework.org/).
 
@@ -112,7 +112,7 @@ Smart Keywords offer enhanced versions of these SeleniumLibrary Keywords that ac
 4. Using JQuery or JavaScript to parse text on the page for easier element lookup, resulting in faster test case writing and more human-readable test cases
 5. Being accessible from a Python method as well as a Robot Test Case
 
-### Smart Click Example
+#### Smart Click Example
 In the same `persistent_test.robot` Test Suite from earlier, copy the following code:
 
     Click Test
@@ -145,7 +145,7 @@ This will make Smart Click wait for **up to** 2 minutes for the Demo button to b
 
 With this enhancement, you'll never have to explicitly call another Sleep or Wait For... Keyword in your test cases again!
 
-### Text Parsing using JQuery or JavaScript
+#### Text Parsing using JQuery or JavaScript
 Most Smart Keywords also include the ability to locate elements based on their element tag and thier inner text.
 In our same `Click Test` example from before, let's first change all our Click Elements to Smart Clicks
 
@@ -177,7 +177,7 @@ Note the use of `div.col-md-4 > a` in the last Smart Click. Partial css selector
 
 With tag and innerText parsing, you are no longer bound to strictly using css selectors or xpaths when targeting elements, resulting in cleaner, more readable, faster to write Test Cases!
 
-### Smart Keywords from Python
+#### Smart Keywords from Python
 One of RobotFramework's greatest advantages is the ease of creating custom Python libraries and methods and being able to execute these directly from a Robot Test Case.
 This is especially useful when needing to write out a more complex set of actions from Python where features like nested for loops, while loops, etc, are available.
 To further facilitate this capability, Smart Keywords are also accessible from your extended Python libraries and methods.
