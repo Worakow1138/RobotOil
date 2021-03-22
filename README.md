@@ -22,7 +22,7 @@ RobotOil is a library of quality-of-life features for automated test case develo
 
 Enhancements include persistent browser sessions to assist with debugging your scripts and "Smart" versions of common-use SeleniumLibrary Keywords to make navigating your web application even easier. To top it all off, everything within RobotOil may be executed from either a Robot Test Suite OR the execution of a Python file.
 
-Grease the gears of your next automation project with [RobotOil](https://github.com/Worakow1138/Robot_Enhancements)!
+Grease the gears of your next automation project with [RobotOil](https://github.com/Worakow1138/RobotOil)!
 
 ## Dependencies
 Requires RobotFramework, SeleniumLibrary, and [Selenium Tools for Microsoft Edge](https://pypi.org/project/msedge-selenium-tools/). 
@@ -37,7 +37,7 @@ Recommend using pip to install RobotOil.
 
     pip install robotframework-RobotOil -U
 
-If using [GitHub](https://github.com/Worakow1138/Robot_Enhancements), copy the RobotOil folder from the src folder to anywhere in your PATH. 
+If using [GitHub](https://github.com/Worakow1138/RobotOil), copy the RobotOil folder from the src folder to anywhere in your PATH. 
 Ideally, to the (your Python library)/Lib/site-packages folder.
 
 ## Importing RobotOil
@@ -260,4 +260,4 @@ Loading elements can just as easily be given to Smart Keywords when called from 
 ## Conclusion
 I hope you enjoy the additional capabilities and ease-of-use that RobotOil brings to automated web testing with RobotFramework.
 
-Please don't hesitate to reach out with questions or suggestions on [GitHub](https://github.com/Worakow1138/Robot_Enhancements)
+Please don't hesitate to reach out with questions or suggestions on [GitHub](https://github.com/Worakow1138/RobotOil)
