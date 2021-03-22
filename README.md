@@ -146,7 +146,7 @@ This will make Smart Click wait for **up to** 2 minutes for the Demo button to b
 With this enhancement, you'll never have to explicitly call another Sleep or Wait For... Keyword in your test cases again!
 
 #### Text Parsing using JQuery or JavaScript
-Most Smart Keywords also include the ability to locate elements based on their element tag and thier inner text.
+Most Smart Keywords also include the ability to locate elements based on their element tag and their inner text.
 In our same `Click Test` example from before, let's first change all our Click Elements to Smart Clicks
 
     Click Test
