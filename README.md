@@ -125,11 +125,11 @@ In the same `persistent_test.robot` Test Suite from earlier, copy the following 
 Run using `robot -t "Click Test" PATH_TO_TEST_SUITE\persistent_test.robot`.
 
 This test ends up failing because the last use of Click Element is targeting the green "Demo" button on the Main Features page.
-However, this button has not become completely accessible when the Main Features page finishes loading, causing the Click Element Keywords to fail the Test Case.
+However, this button has not become completely accessible when the Main Features page finishes loading, causing the Click Element Keyword to fail the Test Case.
 
 ![not_yet_loaded](https://github.com/Worakow1138/RobotOil/blob/main/images/not_yet_loaded.png?raw=true)
 
-A typical workaround to this issue might include having to write in a Wait For Page to Contain Element (the element in question) or worse, a call to the dreaded `Sleep` Keyword. Static waits like Sleep and the variability of internet connections and server responses do NOT mix well.
+A typical workaround to this issue might include having to write in a `Wait For Page to Contain Element` or worse, a call to the dreaded `Sleep` Keyword. Static waits like Sleep and the variability of internet connections and server responses do NOT mix well.
 
 Instead, change the last Click Element to `Smart Click` so the last line looks like this:
 
@@ -241,12 +241,14 @@ In a Robot Test Suite, copy the following example code:
 This test clicks the `Extras "Progress" Test` button and then attempts to verify that a `div` with the text `Element 2` is visible.
 The test, however, fails due to the Ajax spinner being in the way of the target element.
 
+![Axaj_Still_Visible](https://github.com/Worakow1138/RobotOil/blob/main/images/ajax_still_visible.png?raw=true)
+
 Rather than design our Test Case around this necessary evil of modern web development, create the following list of loading elements in your Test Suite:
 
     **** Variables ***
     @{loading_elements}    class:loadingoverlay
 
-Then, wherever your call to `RobotOil` exists in your test framework, add this list as an argumen to the class:
+Then, wherever your call to `RobotOil` exists in your test framework, add this list as an argument to the class:
 
     Library    RobotOil    ${loading_elements}
 
