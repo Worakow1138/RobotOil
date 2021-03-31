@@ -6,7 +6,7 @@ class WebUtilities:
     def __init__(self):
         self.SEL = SeleniumLibrary()
 
-    def return_web_element(self, *elements, return_none='unacceptable'):
+    def return_web_element(self, *elements, **return_none):
         """Returns a Selenium Webelement if given more than one argument.
            If given only one argument, returns the argument assuming it is already a locator or webelement
            Acceptable arguments for elements are:
@@ -75,7 +75,7 @@ class WebUtilities:
                         """
                 final_element = UWS.browser.execute_script(JS)
 
-        if final_element is None and return_none == 'unacceptable':
+        if final_element is None and return_none.get('return_none') == 'unacceptable':
             self.SEL.failure_occurred()
             raise AssertionError('Element with tag "' + selector + '" and text "' + final_text + '" was not found.')
         else:

@@ -33,7 +33,7 @@ class PersistentBrowser:
         }
 
     @keyword
-    def open_persistent_browser(self, url, browser, *browser_options, port=4444):
+    def open_persistent_browser(self, url, browser, *browser_options, **port):
         """Creates a Persistent Browser, a selenium-generated browser session that can be interacted with via Robot Keywords and Python methods, interchangeably. 
            Persistent Browsers and the accompanying webdriver exe file (chromedriver.exe, geckodriver.exe, etc.) do not automatically close after a test execution.
            Arguments:
@@ -56,6 +56,10 @@ class PersistentBrowser:
             self.options.add_argument(arg)
 
         if browser == 'firefox':
+            if port.get('port'):
+                port = int(port.get('port'))
+            else:
+                port = 4444
             subprocess.Popen(f'geckodriver.exe -p {port}')
             service = webdriver.firefox.service.Service('geckodriver.exe', port=port)
             initial_browser = self.browser_options[browser]['webdriver_create'](options=self.options, command_executor=service.service_url)

@@ -55,7 +55,7 @@ class SmartKeywords(WebUtilities):
                 self.SEL.run_keyword('wait_until_element_is_not_visible', [element, timeout], {})
 
     @keyword
-    def smart_click(self, *elements, timeout=global_timeout):
+    def smart_click(self, *elements, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits for the given element to be visible.
            Attempts to click the element.
@@ -72,6 +72,11 @@ class SmartKeywords(WebUtilities):
            - * and exact text to search for e.g. * | Some Text
            If a custom timeout is desired, it may be given in the form of timeout=time_in_seconds; e.g. timeout=30 to set a custom timeout of 30 seconds instead of defaulting to the time set by global_timeout
         """
+
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
         
         self.wait_for_loading_elements(timeout)
 
@@ -84,7 +89,7 @@ class SmartKeywords(WebUtilities):
         self.wait_for_loading_elements(timeout)
 
     @keyword
-    def smart_select_from_list(self, *elements, timeout=global_timeout):
+    def smart_select_from_list(self, *elements, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits until the target_list is visible.
            Attempts to select the item from the target_list according to the item_type.
@@ -100,6 +105,11 @@ class SmartKeywords(WebUtilities):
            - item: The item to be chosen from the target_list. If item_type is given the value of the item to be chosen from the list (instead of index, value, or label), this variable may be left blank
            - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
         """
+
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
 
         target_list = elements[0]
 
@@ -128,7 +138,7 @@ class SmartKeywords(WebUtilities):
         self.wait_for_loading_elements(timeout)
 
     @keyword
-    def smart_get_element_attribute(self, attribute, *elements, timeout=global_timeout):
+    def smart_get_element_attribute(self, attribute, *elements, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits until the target element is present on the page (does not need to be visible).
            Retrieves the element's attribute.
@@ -137,7 +147,13 @@ class SmartKeywords(WebUtilities):
            Argument(s):
            - attribute: The desired element attribute
            - elements: The element or locator to retrieve the attribute from (see Smart Click for additonal documentation on acceptable values)
+           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
         """
+
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
 
         self.wait_for_loading_elements(timeout)
 
@@ -152,7 +168,7 @@ class SmartKeywords(WebUtilities):
         return attribute_value
 
     @keyword
-    def smart_input(self, element, text, timeout=global_timeout):
+    def smart_input(self, element, text, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits until the given element is visible.
            Inputs the text into the given element.
@@ -164,6 +180,11 @@ class SmartKeywords(WebUtilities):
             - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
         """
 
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
+
         self.wait_for_loading_elements(timeout)
 
         self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
@@ -173,7 +194,7 @@ class SmartKeywords(WebUtilities):
         self.wait_for_loading_elements(timeout)
 
     @keyword
-    def smart_confirm_element(self, status_to_confirm, *elements, timeout=global_timeout):
+    def smart_confirm_element(self, status_to_confirm, *elements, **timeout):
         """Waits for loading elements to no longer be visible.
            Performs the specific Wait Until Element Is... Keyword(s) based on the status_to_confirm
            Waits for loading elements to no longer be visible.
@@ -185,7 +206,13 @@ class SmartKeywords(WebUtilities):
            Argument(s):
            - status_to_confirm: Acceptable statuses to confirm are Visible, Not Visible, Exists, and Not Exists
            - elements: The element or locator to retrieve the attribute from (see Smart Click for additonal documentation on acceptable values)
+           - timeout: The time to wait for the page to finish loading and for the element to be at the status indicated by status_to_confirm; defaults to global_timeout if not specified
         """
+
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
 
         self.wait_for_loading_elements(timeout)
 
@@ -221,7 +248,7 @@ class SmartKeywords(WebUtilities):
         self.wait_for_loading_elements(timeout)
 
     @keyword
-    def smart_input_password(self, element, text, timeout=global_timeout):
+    def smart_input_password(self, element, text, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits until the given element is visible.
            Inputs the text into the given element.
@@ -236,6 +263,11 @@ class SmartKeywords(WebUtilities):
            - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
         """
 
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
+
         self.wait_for_loading_elements(timeout)
 
         self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
@@ -245,16 +277,21 @@ class SmartKeywords(WebUtilities):
         self.wait_for_loading_elements(timeout)
 
     @keyword
-    def smart_get_element_text(self, element, timeout=global_timeout):
+    def smart_get_element_text(self, element, **timeout):
         """Waits for loading elements to no longer be visible.
            Waits until the given element is visible.
            Retrieves the text of the given element.
            Waits for loading elements to no longer be visible.
 
-        Argument(s):
-        - element: The element to retrieve the text from
-        - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
+           Argument(s):
+           - element: The element to retrieve the text from
+           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
         """
+
+        if timeout.get('timeout'):
+            timeout = int(timeout.get('timeout'))
+        else:
+            timeout = self.global_timeout
 
         self.wait_for_loading_elements(timeout)
 
