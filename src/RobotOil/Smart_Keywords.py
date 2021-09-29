@@ -253,9 +253,6 @@ class SmartKeywords(WebUtilities):
            Waits until the given element is visible.
            Inputs the text into the given element.
            Waits for loading elements to no longer be visible.
-
-           NOTE: Because the Input Password Keyword reaches out to the BuiltIn() class, this method must be used from a Robot execution
-           For debugging, the smart_input() method is nearly identical and may be used instead.
            
            Argument(s):
            - element: The field to enter text in
@@ -272,7 +269,10 @@ class SmartKeywords(WebUtilities):
 
         self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
 
-        self.run_robot_keyword('input_password', element, text)
+        try:
+            self.run_robot_keyword('input_password', element, text)
+        except RobotNotRunningError:
+            self.run_robot_keyword('input_text', element, text)
 
         self.wait_for_loading_elements(timeout)
 

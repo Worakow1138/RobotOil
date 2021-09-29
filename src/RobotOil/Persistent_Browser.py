@@ -72,11 +72,15 @@ class PersistentBrowser:
 
         UWS.browser.get(url)
 
+        return UWS.browser
+
     @keyword
     def use_current_persistent_browser(self):
         """Allows for test executions to begin on the last opened Persistent Browser
         """
         UWS.create_utility_webdrivers(session_info[0], session_info[1])
+
+        return UWS.browser
 
 
     @keyword

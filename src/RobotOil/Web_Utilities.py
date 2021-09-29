@@ -22,6 +22,11 @@ class WebUtilities:
 
            Example: ${final_element}  |  Python Return Element  |  css:#someId  |  InnerText Of Element with id of someId
         """
+        # Default is to not allow returning a None final_element
+        # This can be overridden by using return_none = 'acceptable'
+        default_return = {"return_none": "unacceptable"}
+        return_none = {**default_return, **return_none}
+
         final_element = None
 
         # If only one argument is given, the argument is returned and assumed to be either a Selenium WebElement or locator
