@@ -1,8 +1,8 @@
-import os, subprocess
-from msedge.selenium_tools import Edge, EdgeOptions
+import os
 from selenium import webdriver
 from robot.api.deco import keyword
 from RobotOil.Utility_Webdriver_Setup import UtilityWebdriverSetup as UWS
+from selenium.webdriver.common.service import Service
 try:
     from RobotOil.session_info import session_info
 except ImportError:
@@ -10,13 +10,13 @@ except ImportError:
 
 
 
-class PersistentBrowser:
+class SmartBrowser:
 
     def __init__(self):
         self.browser_options = {
         'edge': {
-            'options': EdgeOptions(),
-            'webdriver_create': Edge
+            'options': webdriver.EdgeOptions(),
+            'webdriver_create': webdriver.Edge
         },
         'chrome': {
             'options': webdriver.ChromeOptions(),
@@ -24,7 +24,7 @@ class PersistentBrowser:
         },
         'firefox': {
             'options': webdriver.FirefoxOptions(),
-            'webdriver_create': webdriver.Remote
+            'webdriver_create': webdriver.Firefox
         },
         'ie': {
             'options': webdriver.IeOptions(),
@@ -33,38 +33,31 @@ class PersistentBrowser:
         }
 
     @keyword
-    def open_persistent_browser(self, url, browser, *browser_options, **port):
-        """Creates a Persistent Browser, a selenium-generated browser session that can be interacted with via Robot Keywords and Python methods, interchangeably. 
-           Persistent Browsers and the accompanying webdriver exe file (chromedriver.exe, geckodriver.exe, etc.) do not automatically close after a test execution.
+    def open_smart_browser(self, url, browser, *browser_options):
+        """Creates a Smart Browser, a selenium-generated browser session that can be interacted with via Robot Keywords and Python methods, interchangeably. 
+           Smart Browsers and the accompanying webdriver exe file (chromedriver.exe, geckodriver.exe, etc.) do not automatically close after a test execution.
            Arguments:
-           - url: The starting url for the Persistent Browser to navigate to
+           - url: The starting url for the Smart Browser to navigate to
            - browser: The desired browser to open (currently supports Chrome, Firefox, Edge, and IE)
-           - browser_options: Additional arguments for the browser session, e.g. --headless to launch in headless mode
-           - port: Only needed for Persistent Browsers using Firefox, all other browsers will automatically select unused ports
+           - browser_options: Additional arguments for the browser session, e.g. --headless to launch in headless modes
         """ 
 
         global initial_browser
 
         browser = browser.lower()
 
-        self.options = self.browser_options[browser]['options']
+        if browser not in self.browser_options:
+            raise KeyError(f"'{browser}' not in list of acceptable browsers. Acceptable browsers are chrome, edge, firefox, and ie")
 
-        if browser == 'edge':
-            self.options.use_chromium = True
+        self.options = self.browser_options[browser]['options']
 
         for arg in browser_options:
             self.options.add_argument(arg)
 
-        if browser == 'firefox':
-            if port.get('port'):
-                port = int(port.get('port'))
-            else:
-                port = 4444
-            subprocess.Popen(f'geckodriver.exe -p {port}')
-            service = webdriver.firefox.service.Service('geckodriver.exe', port=port)
-            initial_browser = self.browser_options[browser]['webdriver_create'](options=self.options, command_executor=service.service_url)
-        else:
-            initial_browser = self.browser_options[browser]['webdriver_create'](options=self.options)
+        if "persist" in browser_options:
+            Service.__del__ = lambda new_del: None
+
+        initial_browser = self.browser_options[browser]['webdriver_create'](options=self.options)
 
         session_info = [initial_browser.command_executor._url, initial_browser.session_id]
 
@@ -75,8 +68,8 @@ class PersistentBrowser:
         return UWS.browser
 
     @keyword
-    def use_current_persistent_browser(self):
-        """Allows for test executions to begin on the last opened Persistent Browser
+    def use_current_smart_browser(self):
+        """Allows for test executions to begin on the last opened Smart Browser
         """
         UWS.create_utility_webdrivers(session_info[0], session_info[1])
 
@@ -84,9 +77,9 @@ class PersistentBrowser:
 
 
     @keyword
-    def cleanup_persistent_browser(self):
-        """Attempts to tear down most recent persistent browser.
-           Kills all geckodriver.exe and chromedriver.exe processes.
+    def cleanup_smart_browser(self):
+        """Attempts to tear down most recent Smart Browser.
+           Kills all geckodriver.exe, chromedriver.exe, and msedgedriver.exe processes.
         """
         try:
             UWS.browser.quit()
@@ -94,7 +87,4 @@ class PersistentBrowser:
             pass
         os.system('taskkill /f /im geckodriver.exe')
         os.system('taskkill /f /im chromedriver.exe')
-
-
-
-
+        os.system('taskkill /f /im msedgedriver.exe')
