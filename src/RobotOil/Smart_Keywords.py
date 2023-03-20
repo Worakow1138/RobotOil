@@ -1,23 +1,21 @@
-from RobotOil.Web_Utilities import WebUtilities
 from robot.api.deco import keyword
 from SeleniumLibrary import SeleniumLibrary
 from robot.libraries.BuiltIn import (BuiltIn, RobotNotRunningError)
-import time
 
-class SmartKeywords(WebUtilities):
+class SmartKeywords:
     """This class mostly houses calls to SeleniumLibrary Keywords that also behave in a "Smart" fashion, meaning these Keywords will:
-       1. Confirm that the element is visible before attempting to interact with the element (unless otherwise specified by the Keyword)
+       1. Confirm that the element is visible before attempting to interact with the element
        2. Confirm that any "loading elements" have ceased to be visible before attempting to search for the given elements
-       3. With the exception of Smart Input, Smart Input Password, and Smart Get Element Text be able to receive element lookups in the style of "element tag" | "element text"
-       4. Fail the Keyword if any of the above actions are not correctly performed within a time limit given at call of the Keyword
-       5. Be accessible from a Python file as well as in Robot Framework
+       3. Fail the Keyword if any of the above actions are not correctly performed within a time limit given at call of the Keyword
+       4. Be accessible from a Python file as well as in Robot Framework
     """
 
-    def __init__(self, loading_elements):
+    def __init__(self, loading_elements, smart_timeout):
         self.loading_elements = loading_elements
+        self.smart_timeout = smart_timeout
     
     # Default time to wait for a desired condition in the Smart Keywords
-    global_timeout = 60
+    default_timeout = 60
 
     # Class instances for BuiltIn, SeleniumLibrary, and Python_Universal_Methods
     BI = BuiltIn()
@@ -32,273 +30,188 @@ class SmartKeywords(WebUtilities):
     except RobotNotRunningError:
         env = SEL
 
-    # The self.run_robot_keyword() method is used to call Robot methods from either the BuiltIn() class or the SeleniumLibrary() class
-    # In order to prevent over-complication of Robot logs, the BuiltIn() class will only be used for the primary function in a the following methods
-
-    # Example: smart_click() checks for the page to be finished loading, the element to be visible, and then performs the click_element() Keyword;
-    # Only the click_element() method call will use the BuiltIn() class and therefore appear in the Robot logs. The other two methods will be handeled purely
-    # by the SeleniumLibrary() class and will only appear on the Robot log if there is an error.
     def run_robot_keyword(self, keyword, *args):
+        """Calls Robot methods from either the BuiltIn() class or the SeleniumLibrary() class"""
         if self.env == self.BI:
             return self.BI.run_keyword(keyword, *args)
         elif self.env == self.SEL:
             return self.SEL.run_keyword(keyword, args, {})
 
-
     @keyword
-    def wait_for_loading_elements(self, timeout=global_timeout):
-        """Waits for all given "loading elements" to no longer be visible.
-           Typically for use only in the following Smart Keywords.
-        """
-        if self.loading_elements:
-            for element in self.loading_elements:
-                self.SEL.run_keyword('wait_until_element_is_not_visible', [element, timeout], {})
+    def smart_keyword(self, robot_keyword, locator, args=None, timeout=None):
+        """Performs a SeleniumLibrary ``robot_keyword`` while ensuring that the element represented by ``locator`` is first visible within 
+        the time limit in seconds, given by ``timeout``.
 
-    @keyword
-    def smart_click(self, *elements, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits for the given element to be visible.
-           Attempts to click the element.
-           Waits for laoding elements to no longer be visible.
+        ``args`` represents any information necessary to the SeleniumLibrary keyword, e.g. Input Text requires an element locator and args="Text to Enter"
 
-           Argument(s): 
-           elements, can include:
-           - 'xpath:(xpath locator)' e.g. xpath://span[text()="Some Text"]
-           - (xpath locator), starting with '//' e.g. //span[text()="Some Text"]
-           - 'css:(css locator)' e.g. css:span
-           - 'css:(css locator)' and exact text to search for e.g. css:span | Some Text
-           - (css locator) e.g. span
-           - (css locator) and exact text to search for e.g. span | Some Text
-           - * and exact text to search for e.g. * | Some Text
-           If a custom timeout is desired, it may be given in the form of timeout=time_in_seconds; e.g. timeout=30 to set a custom timeout of 30 seconds instead of defaulting to the time set by global_timeout
+        Waiting for the element to become visible is not performed if the keyword is defined as one of the ``wait_until`` SeleniumLibrary keywords
         """
 
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
+        # Timeout for element to be found may come from the timeout given to this method, the smart_timeout set when instantiating the RobotOil class,
+        # or the default_timeout.
+        if timeout:
+            time_to_wait = timeout
+        elif self.smart_timeout:
+            time_to_wait = self.smart_timeout
         else:
-            timeout = self.global_timeout
+            time_to_wait = self.default_timeout
+        time_to_wait = int(time_to_wait)
+
+        # SeleniumLibrary will only accept
+        modified_keyword = robot_keyword.replace(" ", "_").lower()
+
+        # ``wait_until_`` keywords do not need to wait until they are visible
+        if modified_keyword.startswith("wait_until_"):
+            if args:
+                return self.run_robot_keyword(modified_keyword, locator, args, time_to_wait)
+            else:
+                return self.run_robot_keyword(modified_keyword, locator, time_to_wait)
+
+        # Wait until the element is visible before proceeding
+        self.run_robot_keyword("wait_until_element_is_visible", locator, time_to_wait)
+
+        # ``Get WebElement`` and ``Get WebElements`` will not work if modified
+        if robot_keyword == "Get WebElement" or robot_keyword == "Get WebElements":
+            return self.run_robot_keyword(robot_keyword, locator)
+        # Convert args to strings as SeleniumLibrary keywords, when executed solely through Python, do not make necessary conversions
+        elif type(args) is tuple:
+            args = tuple(str(i) for i in args)
+            return self.run_robot_keyword(modified_keyword, locator, *args)
+        elif args is not None:
+            args = str(args)
+            return self.run_robot_keyword(modified_keyword, locator, args)
+        else:
+            return self.run_robot_keyword(modified_keyword, locator)
+
+    @keyword
+    def smart_click_element(self, locator, timeout=None):
+        """Click the element identified by ``locator``.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
+
+        The ``modifier`` argument can be used to pass
+        [https://seleniumhq.github.io/selenium/docs/api/py/webdriver/selenium.webdriver.common.keys.html#selenium.webdriver.common.keys.Keys|Selenium Keys]
+        when clicking the element. The `+` can be used as a separator
+        for different Selenium Keys. The `CTRL` is internally translated to
+        the `CONTROL` key. The ``modifier`` is space and case insensitive, example
+        "alt" and " aLt " are supported formats to
+        [https://seleniumhq.github.io/selenium/docs/api/py/webdriver/selenium.webdriver.common.keys.html#selenium.webdriver.common.keys.Keys.ALT|ALT key]
+        . If ``modifier`` does not match to Selenium Keys, keyword fails.
+
+        If ``action_chain`` argument is true, see `Boolean arguments` for more
+        details on how to set boolean argument, then keyword uses ActionChain
+        based click instead of the <web_element>.click() function. If both
+        ``action_chain`` and ``modifier`` are defined, the click will be
+        performed using ``modifier`` and ``action_chain`` will be ignored.
+
+        Example:
+        | Click Element | id:button |                   | # Would click element without any modifiers.               |
+        | Click Element | id:button | CTRL              | # Would click element with CTLR key pressed down.          |
+        | Click Element | id:button | CTRL+ALT          | # Would click element with CTLR and ALT keys pressed down. |
+        | Click Element | id:button | action_chain=True | # Clicks the button using an Selenium  ActionChains        |
+
+        The ``modifier`` argument is new in SeleniumLibrary 3.2
+        The ``action_chain`` argument is new in SeleniumLibrary 4.1
+        """
+        self.smart_keyword("Click Element", locator=locator, timeout=timeout)
+
+    @keyword
+    def smart_input_text(self, locator, text, timeout=None):
+        """Types the given ``text`` into the text field identified by ``locator``.
+
+        When ``clear`` is true, the input element is cleared before
+        the text is typed into the element. When false, the previous text
+        is not cleared from the element. Use `Input Password` if you
+        do not want the given ``text`` to be logged.
+
+        If [https://github.com/SeleniumHQ/selenium/wiki/Grid2|Selenium Grid]
+        is used and the ``text`` argument points to a file in the file system,
+        then this keyword prevents the Selenium to transfer the file to the
+        Selenium Grid hub. Instead, this keyword will send the ``text`` string
+        as is to the element. If a file should be transferred to the hub and
+        upload should be performed, please use `Choose File` keyword.
+
+        See the `Locating elements` section for details about the locator
+        syntax. See the `Boolean arguments` section how Boolean values are
+        handled.
+
+        Disabling the file upload the Selenium Grid node and the `clear`
+        argument are new in SeleniumLibrary 4.0
+        """
+        self.smart_keyword("Input Text", locator=locator, args=text, timeout=timeout)
+
+    @keyword
+    def smart_get_web_element(self, locator, timeout=None):
+        """Returns the first WebElement matching the given ``locator``.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
+        """
+        return self.smart_keyword("Get WebElement", locator=locator, timeout=timeout)
+
+    @keyword
+    def smart_get_web_elements(self, locator, timeout=None):
+        """Returns a list of WebElement objects matching the ``locator``.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
+
+        Starting from SeleniumLibrary 3.0, the keyword returns an empty
+        list if there are no matching elements. In previous releases, the
+        keyword failed in this case.
+        """
+        return self.smart_keyword("Get WebElements", locator=locator, timeout=timeout)
+
+    @keyword
+    def smart_select_from_list_by_value(self, locator, values, timeout=None):
+        """Selects options from selection list ``locator`` by ``values``.
+
+        If more than one option is given for a single-selection list,
+        the last value will be selected. With multi-selection lists all
+        specified options are selected, but possible old selections are
+        not cleared.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
+        """
+        self.smart_keyword("Select From List By Value", locator=locator, args=values, timeout=timeout)
         
-        self.wait_for_loading_elements(timeout)
+    @keyword
+    def smart_select_from_list_by_label(self, locator, labels, timeout=None):
+        """Selects options from selection list ``locator`` by ``labels``.
 
-        final_element = self.return_web_element(*elements)
+        If more than one option is given for a single-selection list,
+        the last value will be selected. With multi-selection lists all
+        specified options are selected, but possible old selections are
+        not cleared.
 
-        self.SEL.run_keyword('wait_until_element_is_visible', [final_element, timeout], {})
-   
-        self.run_robot_keyword('click_element', final_element)
-
-        self.wait_for_loading_elements(timeout)
+        See the `Locating elements` section for details about the locator
+        syntax.
+        """
+        self.smart_keyword("Select From List By Label", locator=locator, args=labels, timeout=timeout)
 
     @keyword
-    def smart_select_from_list(self, *elements, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits until the target_list is visible.
-           Attempts to select the item from the target_list according to the item_type.
-           Waits for loading elements to no longer be visible.
-           
-           Examples:
-           Smart Select From List | css:#idOfList | index | 0 will select the first item from the list designated by css:#idOfList
-           Smart Select From List | css:#idOfList | label | some_text will select a dropdown item with innertext of some_text from the list designated by css:#idOfList
-           
-           Argument(s):
-           - target_list: The list to be selected from
-           - item_type: Acceptable values are "index", "value", "label", or the item to be chosen from the list. If "index", "value", or "label" are given, will choose item variable from target_list according to item_type
-           - item: The item to be chosen from the target_list. If item_type is given the value of the item to be chosen from the list (instead of index, value, or label), this variable may be left blank
-           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
+    def smart_select_from_list_by_index(self, locator, indexes, timeout=None):
+        """Selects options from selection list ``locator`` by ``indexes``.
+
+        Indexes of list options start from 0.
+
+        If more than one option is given for a single-selection list,
+        the last value will be selected. With multi-selection lists all
+        specified options are selected, but possible old selections are
+        not cleared.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
         """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        target_list = elements[0]
-
-        item = elements[-1]
-
-        if len(elements) == 3:
-            item_type = elements[1]
-        else:
-            item_type = 'N/A'
-
-        self.wait_for_loading_elements(timeout)
-
-        self.SEL.run_keyword('wait_until_element_is_visible', [target_list, timeout], {})
-
-        item_types = {
-            'index':'select_from_list_by_index',
-            'value':'select_from_list_by_value',
-            'label':'select_from_list_by_label'
-        }
-
-        if item_type.lower() in item_types:
-            self.run_robot_keyword(item_types[item_type.lower()], target_list, item)
-        else:
-            self.run_robot_keyword('select_from_list_by_label', target_list, item)
-
-        self.wait_for_loading_elements(timeout)
+        self.smart_keyword("Select From List By Index", locator=locator, args=indexes, timeout=timeout)
 
     @keyword
-    def smart_get_element_attribute(self, attribute, *elements, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits until the target element is present on the page (does not need to be visible).
-           Retrieves the element's attribute.
-           Waits for loading elements to no longer be visible.
-           
-           Argument(s):
-           - attribute: The desired element attribute
-           - elements: The element or locator to retrieve the attribute from (see Smart Click for additonal documentation on acceptable values)
-           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
+    def smart_get_text(self, locator, timeout=None):
+        """Returns the text value of the element identified by ``locator``.
+
+        See the `Locating elements` section for details about the locator
+        syntax.
         """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        self.wait_for_loading_elements(timeout)
-
-        final_element = self.return_web_element(*elements)
-
-        self.SEL.run_keyword('wait_until_page_contains_element', [final_element, timeout], {})
-
-        attribute_value = self.run_robot_keyword('get_element_attribute', final_element, attribute)
-
-        self.wait_for_loading_elements(timeout)
-
-        return attribute_value
-
-    @keyword
-    def smart_input(self, element, text, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits until the given element is visible.
-           Inputs the text into the given element.
-           Waits for loading elements to no longer be visible.
-        
-            Argument(s):
-            - element: The field to enter text in
-            - text: The text to be entered
-            - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
-        """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        self.wait_for_loading_elements(timeout)
-
-        self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
-
-        self.run_robot_keyword('input_text', element, text)
-
-        self.wait_for_loading_elements(timeout)
-
-    @keyword
-    def smart_confirm_element(self, status_to_confirm, *elements, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Performs the specific Wait Until Element Is... Keyword(s) based on the status_to_confirm
-           Waits for loading elements to no longer be visible.
-
-           Examples:
-           Smart Confirm Element | Exists | css:#idOfElement  will pass if the element is detected on the page within the time limit and otherwise fail
-           Smart Confirm Element | Not Visible | css:#idOfElement will pass if the element is both detected on the page but is not visible within the time limit 
-           
-           Argument(s):
-           - status_to_confirm: Acceptable statuses to confirm are Visible, Not Visible, Exists, and Not Exists
-           - elements: The element or locator to retrieve the attribute from (see Smart Click for additonal documentation on acceptable values)
-           - timeout: The time to wait for the page to finish loading and for the element to be at the status indicated by status_to_confirm; defaults to global_timeout if not specified
-        """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        self.wait_for_loading_elements(timeout)
-
-        statuses = {
-            'visible':{
-                'status_args':['wait_until_page_contains_element', 'wait_until_element_is_visible'],
-                'return_status':'unacceptable'
-            },
-            'not visible':{
-                'status_args':['wait_until_page_contains_element', 'wait_until_element_is_not_visible'],
-                'return_status':'unacceptable'
-            },
-            'exists':{
-                'status_args':['wait_until_page_contains_element'],
-                'return_status':'unacceptable'
-            },
-            'not exists':{
-                'status_args':['wait_until_page_does_not_contain_element'],
-                'return_status':'acceptable'
-            },
-        }
-
-        status_corrected = status_to_confirm.lower()
-
-        try:
-            final_element = self.return_web_element(*elements, return_none=statuses[status_corrected]['return_status'])
-            if final_element != None:
-                for argument in statuses[status_corrected]['status_args']:
-                    self.run_robot_keyword(argument, final_element, timeout)
-        except KeyError:
-            raise KeyError(f'Argument "{status_to_confirm}" not recognized. Acceptable arguments for smart_confirm_element are Visible, Not Visible, Exists and Not Exists.')           
-
-        self.wait_for_loading_elements(timeout)
-
-    @keyword
-    def smart_input_password(self, element, text, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits until the given element is visible.
-           Inputs the text into the given element.
-           Waits for loading elements to no longer be visible.
-           
-           Argument(s):
-           - element: The field to enter text in
-           - text: The text to be entered
-           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
-        """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        self.wait_for_loading_elements(timeout)
-
-        self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
-
-        try:
-            self.run_robot_keyword('input_password', element, text)
-        except RobotNotRunningError:
-            self.run_robot_keyword('input_text', element, text)
-
-        self.wait_for_loading_elements(timeout)
-
-    @keyword
-    def smart_get_element_text(self, element, **timeout):
-        """Waits for loading elements to no longer be visible.
-           Waits until the given element is visible.
-           Retrieves the text of the given element.
-           Waits for loading elements to no longer be visible.
-
-           Argument(s):
-           - element: The element to retrieve the text from
-           - timeout: The time to wait for the page to finish loading and for the element to be visible; defaults to global_timeout if not specified
-        """
-
-        if timeout.get('timeout'):
-            timeout = int(timeout.get('timeout'))
-        else:
-            timeout = self.global_timeout
-
-        self.wait_for_loading_elements(timeout)
-
-        self.SEL.run_keyword('wait_until_element_is_visible', [element, timeout], {})
-
-        text = self.SEL.run_keyword('Get WebElement', [element], {}).text
-
-        self.wait_for_loading_elements(timeout)
-
-        return text
+        return self.smart_keyword("Get Text", locator=locator, timeout=timeout)
