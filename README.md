@@ -12,9 +12,7 @@
       - [Smart Browser Example](#smart-browser-example)
     - [Smart Keywords](#smart-keywords)
       - [Smart Click Example](#smart-click-example)
-      - [Text Parsing using JQuery or JavaScript](#text-parsing-using-jquery-or-javascript)
       - [Smart Keywords from Python](#smart-keywords-from-python)
-    - [Loading Elements](#loading-elements)
   - [Conclusion](#conclusion)
 
 ## Introduction
@@ -25,8 +23,8 @@ Enhancements include the option of persistent browser sessions to assist with de
 Grease the gears of your next automation project with [RobotOil](https://github.com/Worakow1138/RobotOil)!
 
 ## Dependencies
-Requires RobotFramework, SeleniumLibrary, and [Selenium Tools for Microsoft Edge](https://pypi.org/project/msedge-selenium-tools/). 
-Use these pip commands to stay up to date with the latest versions.
+Requires RobotFramework and SeleniumLibrary. 
+Use these commands to stay up to date with the latest versions.
 
     pip install robotframework -U
     pip install robotframework-seleniumlibrary -U
@@ -40,7 +38,7 @@ If using [GitHub](https://github.com/Worakow1138/RobotOil), copy the RobotOil fo
 Ideally, to the (your Python library)/Lib/site-packages folder.
 
 ## Importing RobotOil
-RobotOil and all Keywords within may be executed from either a Robot Test Suite, or a Python module.
+RobotOil and all Keywords within may be executed from either a Robot Test Suite or a Python module.
 
 ### Importing into Robot
 Simply call RobotOil as Library within your Test Suite or Resource file of choice.
@@ -102,10 +100,8 @@ These limitations cause unexpected failures and sometimes require complex or tim
 
 Smart Keywords offer enhanced versions of these SeleniumLibrary Keywords that account for this unpredictability and provide additonal quality-of-life improvements by:
 1. Automatically waiting for targeted elements to be visible before attempting to interact
-2. Waiting for "loading elements" to first become non-visible (more on loading elements later)
-3. Allowing for the "time to wait" to be established per Keyword call
-4. Using JQuery or JavaScript to parse text on the page for easier element lookup, resulting in faster test case writing and more human-readable test cases
-5. Being accessible from a Python method as well as a Robot Test Case
+2. Allowing for the "time to wait" to be established per Keyword call
+3. Being accessible from a Python method as well as a Robot Test Case
 
 #### Smart Click Example
 In the same `oil_test.robot` Test Suite from earlier, copy the following code:
@@ -124,53 +120,23 @@ This test ends up failing because the Get Text keyword gives up looking for the 
 
 A typical workaround to this issue might include having to write in a `Wait For Page to Contain Element` or worse, a call to the dreaded `Sleep` Keyword. Static waits like Sleep and the variability of internet connections and server responses do NOT mix well and having to write out a `Wait For...` Keyword before nearly every test step is a chore.
 
-Instead, change the `Get Text` to `Smart Get Element Text` so the last line looks like this:
+Instead, simple add the word `Smart` to the `Get Text` keyword so the last line looks like this:
 
-    ${hello_text}    Smart Get Element Text    css:#finish
+    ${hello_text}    Smart Get Text    css:#finish
 
-And run the test again. The test passes due to `Smart Get Element Text` understanding that it has to wait until the "finish" element is visible before attempting to retrieve its text.
+And run the test again. The test passes due to `Smart Get Text` understanding that it has to wait until the "finish" element is visible before attempting to retrieve its text.
 
 If you want to ensure that the finish element, or any element you want to interact with using a Smart Keyword, becomes visible within a known time limit, you may simply give the `timeout` parameter a specific argument like so:
 
-    ${hello_text}    Smart Get Element Text    css:#finish    timeout=120
+    ${hello_text}    Smart Get Text    css:#finish    timeout=120
 
-This will make `Smart Get Element Text` wait for **up to** 2 minutes for the finish element to become visible before attempting to click the button.
+This will make `Smart Get Text` wait for **up to** 2 minutes for the finish element to become visible before attempting to click the button.
 
-With this enhancement, you'll never have to explicitly call another Sleep or Wait For... Keyword in your test cases again!
+Note: Not all SeleniumLibrary Keywords are available by simply adding `Smart` as a prefix. If a keyword has not been explicitly added to the `Smart Keywords` class, you may add `Smart Keyword` to a SeleniumLibrary keyword and receive the same benefits. For example:
 
-#### Text Parsing using JQuery or JavaScript
-Most Smart Keywords also include the ability to locate elements based on their element tag and their inner text.
-In the same `oil_test.robot` Test Suite from earlier, copy the following code:
+    ${hello_text}    Smart Keyword    Get Text    css:#finish    timeout=120
 
-    Click Test
-        Open Smart Browser    https://phptravels.com/    chrome    persist
-        Maximize Browser Window
-        Smart Click    css:body > div.jfHeader-wrapper > div > div.jfHeader-menuWrapper > ul > li:nth-child(3) > a
-        Smart Click    css:body > div.jfHeader-wrapper > div > div.jfHeader-menuWrapper > ul > li:nth-child(3) > div > ul > li:nth-child(2) > a > span
-        Smart Click    css:#content > div:nth-child(3) > div > div:nth-child(2) > div > div.col-md-4 > a
-
-The first Smart Click targets the `Features` link in the site banner
-
-![Features](https://github.com/Worakow1138/RobotOil/blob/main/images/top_bar_features.png?raw=true)
-
-We can see that the tag for this element is `a` and the innerText is simply `Features`
-
-With this knowledge, Smart Click can locate this element and click it:
-
-    Smart Click    a    Features
-
-In fact, the rest of the Smart Clicks used in this Test Case can be replaced in the same way, resulting in:
-
-    Click Test
-        Open Smart Browser    https://phptravels.com/    chrome    persist
-        Maximize Browser Window
-        Smart Click    a    Features
-        Smart Click    span    Main Features
-        Smart Click    div.col-md-4 > a    Demo
-
-Note the use of `div.col-md-4 > a` in the last Smart Click. Partial css selectors are also completely viable paramters for Smart Keywords.
-
-With tag and innerText parsing, you are now able to target elements based on thier innerText, resulting in cleaner, more readable, faster to write Test Cases!
+With this enhancement, you'll never have to explicitly call another `Sleep` or `Wait For...` Keyword in your test cases again!
 
 #### Smart Keywords from Python
 One of RobotFramework's greatest advantages is the ease of creating custom Python libraries and methods and being able to execute these directly from a Robot Test Case.
@@ -183,12 +149,11 @@ Create a file named `click_test.py` anywhere on your machine, copy the following
 
     oil_can = RobotOil()
 
-    oil_can.use_current_smart_browser()
-    oil_can.smart_click('a', 'Features')
-    oil_can.smart_click('span', 'Main Features')
-    oil_can.smart_click('div.col-md-4 > a', 'Demo')
-
-As long as you have left the same browser session open from the previous examples, you should see the same actions performed as in the `Click Test` Test Case.
+    oil_can.open_smart_browser('https://phptravels.com/', 'chrome', 'persist')
+    oil_can.browser.maximize_window()
+    oil_can.smart_click_element('link:Features')
+    oil_can.smart_click_element('link:Main Features')
+    oil_can.smart_click_element('link:Demo')
 
 To move this functionality back into your established Robot Test Cases, simply wrap this code in a method:
 
@@ -197,10 +162,11 @@ To move this functionality back into your established Robot Test Cases, simply w
     oil_can = RobotOil()
 
     def python_clicking():
-        oil_can.use_current_smart_browser()
-        oil_can.smart_click('a', 'Features', timeout=4)
-        oil_can.smart_click('span', 'Main Features')
-        oil_can.smart_click('div.col-md-4 > a', 'Demo')
+        oil_can.open_smart_browser('https://phptravels.com/', 'chrome', 'persist')
+        oil_can.browser.maximize_window()
+        oil_can.smart_click_element('link:Features')
+        oil_can.smart_click_element('link:Main Features')
+        oil_can.smart_click_element('link:Demo')
 
 And import the file into your `oil_test.robot` Test Suite:
 
@@ -216,46 +182,6 @@ From there, simply call `Python Clicking` from a Test Case of your choice:
         Python Clicking
 
 You may now leverage the already powerful SeleniumLibrary Keywords, with Smart Keyword enhancements, DIRECTLY from Python, and back into your Robot Test Cases!
-
-### Loading Elements
-Often times when testing web applications, asynchronous "loading elements" are implemented by web developers to inform their users that some part of the page is loading.
-Common examples include the jQuery Ajax "spinner"
-
-![ajax](https://github.com/Worakow1138/RobotOil/blob/main/images/ajax.jpg?raw=true)
-
-While useful to web developers and site users, these "loading elements" can often obstruct the view of the elements that an automated test case is trying to interact with.
-Writing around these loading elements for each expected interaction can be an enormous chore that Smart Keywords handle for us.
-
-In a Robot Test Suite, copy the following example code:
-
-    Ajax Test
-        Open Smart Browser    https://www.jqueryscript.net/demo/Simple-Flexible-Loading-Overlay-Plugin-With-jQuery-loadingoverlay-js/    chrome
-        Smart Click    *    Extras "Progress" Test
-        Smart Confirm Element    Visible    div    Element 2
-
-This test clicks the `Extras "Progress" Test` button and then attempts to verify that a `div` with the text `Element 2` is visible.
-The test, however, fails due to the Ajax spinner being in the way of the target element.
-
-![Axaj_Still_Visible](https://github.com/Worakow1138/RobotOil/blob/main/images/ajax_still_visible.png?raw=true)
-
-Rather than design our Test Case around this necessary evil of modern web development, create the following list of loading elements in your Test Suite:
-
-    **** Variables ***
-    @{loading_elements}    class:loadingoverlay
-
-Then, wherever your call to `RobotOil` exists in your test framework, add this list as an argument to the class:
-
-    Library    RobotOil    ${loading_elements}
-
-Upon running the same test again, you should find that `Smart Confirm Element` will now appropriately wait for the class:loadingoverlay elements to no longer be visible before attempting to confirm that the `Element 2` element is visible.
-
-RobotOil may take multiple loading elements and will check to make sure each one is not visible before attempting to execute the main function of each Smart Keyword.
-
-Loading elements can just as easily be given to Smart Keywords when called from Python as well, simply include the list of loading elements in the class instance for RobotOil:
-
-    from RobotOil import RobotOil
-
-    oil_can = RobotOil(['class:loadingoverlay'])
 
 ## Conclusion
 I hope you enjoy the additional capabilities and ease-of-use that RobotOil brings to automated web testing with RobotFramework.
